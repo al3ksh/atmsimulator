@@ -11,3 +11,6 @@ Release/
 *.ilk
 *.log
 ipch/
+
+# Database
+*.db

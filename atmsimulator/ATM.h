@@ -1,6 +1,5 @@
 #pragma once
 
-#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -23,7 +22,6 @@ private:
         Authenticated
     };
 
-    void initializeAccounts();
     void showWelcomeScreen();
     void showMainMenu();
     void handleCardInsertion();
@@ -33,11 +31,11 @@ private:
     void handleDeposit();
     void handleEjectCard();
 
-    std::shared_ptr<Card> findCard(const std::string& cardNumber) const;
-    std::shared_ptr<Account> getCurrentAccount() const;
+    Card* findCard(const std::string& cardNumber);
+    Account* getCurrentAccount();
 
     ATMState m_state;
-    std::shared_ptr<Card> m_currentCard;
-    std::unordered_map<std::string, std::shared_ptr<Account>> m_accounts;
-    std::unordered_map<std::string, std::shared_ptr<Card>> m_cards;
+    Card m_currentCard;
+    std::unordered_map<int, Account> m_accounts;
+    std::unordered_map<std::string, Card> m_cards;
 };
