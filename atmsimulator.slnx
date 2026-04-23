@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="atmsimulator/atmsimulator.vcxproj" Id="4132f563-fbfc-4353-b3bf-970bafd087a3" />
+</Solution>
