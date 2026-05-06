@@ -102,7 +102,8 @@ void ATM::showMainMenu()
     std::cout << "3. Wplata gotowki\n";
     std::cout << "4. Zmien PIN\n";
     std::cout << "5. Historia transakcji\n";
-    std::cout << "6. Wyjmij karte\n";
+    std::cout << "6. Przelew\n";
+    std::cout << "7. Wyjmij karte\n";
     std::cout << "\n";
     std::cout << "Wybierz opcje: ";
 
@@ -151,10 +152,13 @@ void ATM::showMainMenu()
         handleTransactionHistory();
         break;
     case 6:
+        handleTransfer();
+        break;
+    case 7:
         handleEjectCard();
         break;
     default:
-        std::cout << "Nieprawidlowa opcja. Wybierz 1-6.\n";
+        std::cout << "Nieprawidlowa opcja. Wybierz 1-7.\n";
         break;
     }
 }
@@ -350,6 +354,90 @@ void ATM::handleTransactionHistory()
     }
 
     std::cout << "========================================\n";
+}
+
+void ATM::handleTransfer()
+{
+    Account* sender = getCurrentAccount();
+    if (!sender)
+    {
+        return;
+    }
+
+    std::cout << "\nPodaj numer karty odbiorcy: ";
+    std::string recipientCard;
+    std::cin >> recipientCard;
+
+    Card* recipientCardPtr = findCard(recipientCard);
+    if (!recipientCardPtr || !recipientCardPtr->isActive())
+    {
+        std::cout << "Nie znaleziono aktywnej karty odbiorcy.\n";
+        return;
+    }
+
+    if (recipientCardPtr->getAccountId() == sender->getId())
+    {
+        std::cout << "Nie mozna przelac na wlasne konto.\n";
+        return;
+    }
+
+    std::cout << "Podaj walute (np. PLN): ";
+    std::string currency;
+    std::cin >> currency;
+
+    std::cout << "Podaj kwote przelewu: ";
+    double amount;
+    std::cin >> amount;
+
+    if (std::cin.fail())
+    {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Nieprawidlowa kwota.\n";
+        return;
+    }
+
+    if (amount <= 0)
+    {
+        std::cout << "Kwota musi byc dodatnia.\n";
+        return;
+    }
+
+    auto senderBal = sender->getBalance(currency);
+    if (!senderBal || amount > senderBal->getAmount())
+    {
+        std::cout << "Brak wystarczajacych srodkow.\n";
+        return;
+    }
+
+    int recipientId = recipientCardPtr->getAccountId();
+
+    auto& db = Database::getInstance();
+
+    auto recipientBalRows = db.query("SELECT id, amount FROM balances WHERE account_id = " +
+                                     std::to_string(recipientId) + " AND currency = '" + currency + "'");
+
+    if (recipientBalRows.empty())
+    {
+        std::cout << "Konto odbiorcy nie obsluguje waluty " << currency << ".\n";
+        return;
+    }
+
+    db.execute("UPDATE balances SET amount = amount - " + std::to_string(amount) +
+               " WHERE id = " + std::to_string(senderBal->getId()));
+
+    db.execute("UPDATE balances SET amount = amount + " + std::to_string(amount) +
+               " WHERE id = " + recipientBalRows[0][0]);
+
+    Transaction::createInDb(sender->getId(), recipientId, TransactionType::Transfer, amount, currency);
+
+    senderBal->setAmount(senderBal->getAmount() - amount);
+    m_accounts[sender->getId()] = *sender;
+
+    std::cout << "\nPrzelew wykonany!\n";
+    std::cout << "  Kwota: " << std::fixed << std::setprecision(2) << amount << " " << currency << "\n";
+    std::cout << "  Na karte: " << recipientCard << "\n";
+    std::cout << "  Nowe saldo: " << senderBal->getAmount() << " " << currency << "\n";
 }
 
 void ATM::handleAdminLogin()
