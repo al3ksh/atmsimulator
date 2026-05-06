@@ -101,7 +101,8 @@ void ATM::showMainMenu()
     std::cout << "2. Wyplata gotowki\n";
     std::cout << "3. Wplata gotowki\n";
     std::cout << "4. Zmien PIN\n";
-    std::cout << "5. Wyjmij karte\n";
+    std::cout << "5. Historia transakcji\n";
+    std::cout << "6. Wyjmij karte\n";
     std::cout << "\n";
     std::cout << "Wybierz opcje: ";
 
@@ -147,10 +148,13 @@ void ATM::showMainMenu()
         break;
     }
     case 5:
+        handleTransactionHistory();
+        break;
+    case 6:
         handleEjectCard();
         break;
     default:
-        std::cout << "Nieprawidlowa opcja. Wybierz 1-5.\n";
+        std::cout << "Nieprawidlowa opcja. Wybierz 1-6.\n";
         break;
     }
 }
@@ -311,6 +315,41 @@ void ATM::handleEjectCard()
     std::cout << "\nKarta zostala wyjeta.\n";
     m_currentCard = Card();
     m_state = ATMState::Idle;
+}
+
+void ATM::handleTransactionHistory()
+{
+    Account* account = getCurrentAccount();
+    if (!account)
+    {
+        return;
+    }
+
+    auto& db = Database::getInstance();
+    auto rows = db.query("SELECT type, amount, currency, timestamp FROM transactions "
+                         "WHERE from_account_id = " + std::to_string(account->getId()) +
+                         " OR to_account_id = " + std::to_string(account->getId()) +
+                         " ORDER BY id DESC LIMIT 20");
+
+    std::cout << "\n========================================\n";
+    std::cout << "HISTORIA TRANSAKCJI - " << account->getOwnerName() << "\n";
+    std::cout << "========================================\n";
+
+    if (rows.empty())
+    {
+        std::cout << "Brak transakcji.\n";
+    }
+    else
+    {
+        for (const auto& row : rows)
+        {
+            std::cout << row[3] << " | " << row[0] << " | "
+                      << std::fixed << std::setprecision(2) << std::stod(row[1])
+                      << " " << row[2] << "\n";
+        }
+    }
+
+    std::cout << "========================================\n";
 }
 
 void ATM::handleAdminLogin()

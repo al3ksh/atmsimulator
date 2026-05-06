@@ -31,6 +31,7 @@ private:
     void handleWithdrawal();
     void handleDeposit();
     void handleEjectCard();
+    void handleTransactionHistory();
 
     void handleAdminLogin();
     void showAdminMenu();
