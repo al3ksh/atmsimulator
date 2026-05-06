@@ -19,7 +19,8 @@ private:
     {
         Idle,
         CardInserted,
-        Authenticated
+        Authenticated,
+        AdminMenu
     };
 
     void showWelcomeScreen();
@@ -30,6 +31,15 @@ private:
     void handleWithdrawal();
     void handleDeposit();
     void handleEjectCard();
+
+    void handleAdminLogin();
+    void showAdminMenu();
+    void adminCreateAccount();
+    void adminDeleteAccount();
+    void adminListAccounts();
+    void adminAddCard();
+    void adminListCards();
+    void adminSetBalance();
 
     Card* findCard(const std::string& cardNumber);
     Account* getCurrentAccount();
